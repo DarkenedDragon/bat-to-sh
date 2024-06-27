@@ -1,6 +1,7 @@
 mod windows_commands {
 
     trait WindowsCommand {
+        fn is_command(cmd: &str) -> bool;
         fn generate_bash(cmd: &str) -> String;
     }
 
@@ -10,6 +11,10 @@ mod windows_commands {
 
     struct Dir;
     impl WindowsCommand for Dir {
+        fn is_command(cmd: &str) -> bool {
+            return cmd.to_lowercase().starts_with("dir");
+        }
+
         fn generate_bash(cmd: &str) -> String {
             let mut out_string = String::new();
             for word in cmd.split_whitespace() {
@@ -93,6 +98,34 @@ mod windows_commands {
             assert_eq!(
                 Dir::generate_bash("dir \"C:\\Users\"").as_str(),
                 "ls \"C:\\Users\""
+            );
+        }
+    }
+
+    struct UnknownCommand;
+    impl WindowsCommand for UnknownCommand {
+        fn is_command(_cmd: &str) -> bool {
+            // Everything can be an unknown command!
+            return true;
+        }
+
+        fn generate_bash(cmd: &str) -> String {
+            // Comment out the string and add a comment saying
+            // it couldn't be translated
+            return format!("# bat-to-sh COULD NOT TRANSLATE!!!!\n# {}", cmd);
+        }
+    }
+
+    #[cfg(test)]
+    mod unknown_command_tests {
+        use crate::windows_commands::{UnknownCommand, WindowsCommand};
+
+        #[test]
+        fn simple() {
+            assert_eq!(
+                UnknownCommand::generate_bash("mycustomcommand /r /? \"C:\\Users\""),
+                "# bat-to-sh COULD NOT TRANSLATE!!!!\n\
+                # mycustomcommand /r /? \"C:\\Users\""
             );
         }
     }
